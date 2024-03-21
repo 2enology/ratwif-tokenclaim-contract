@@ -5,8 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract TokenAirdrop {
     uint256 public claimableTime;
-    uint256 public totalEthAmount;
-    uint256 public percentTobuy;
+    uint256 public maxCapAmount;
     address public tokenAddress;
     address public owner;
 
@@ -19,9 +18,8 @@ contract TokenAirdrop {
 
     constructor() {
         owner = msg.sender;
-        claimableTime = 1711231255;
-        totalEthAmount = 30 ether;
-        percentTobuy = 50;
+        claimableTime = 1711522800;
+        maxCapAmount = 10000 ether;
     }
 
     mapping(address => UserInfo) public users;
@@ -48,18 +46,13 @@ contract TokenAirdrop {
         claimableTime = _claimableTime;
     }
 
-    // Function to set the percent to buy, accessible only by the contract owner
-    function setPercentToBuy(uint256 _percentTobuy) public onlyOwner {
-        percentTobuy = _percentTobuy;
-    }
-
     function payEthToClaimTokens() public payable {
         require(msg.value > 0, "ETH amount must be greater than 0");
 
         UserInfo storage user = users[msg.sender];
         user.walletAddress = msg.sender;
         user.ethPaidAmount += msg.value;
-        user.canClaimAmount += msg.value * 100; // You will get 100 tokens
+        user.canClaimAmount += msg.value * 500; // You will get 500 tokens
         user.claimedState = false;
     }
 
@@ -99,7 +92,6 @@ contract TokenAirdrop {
     }
 
     // Function to withdraw token, accessible only by the contract owner
-
     function withdrawAllTokens() public onlyOwner {
         require(
             msg.sender == owner,
@@ -134,6 +126,7 @@ contract TokenAirdrop {
 
     function isAvailableTobuy() external view returns (bool) {
         uint256 contractBalance = address(this).balance;
-        return ((contractBalance * 100) / totalEthAmount) < percentTobuy;
+        return
+            contractBalance < maxCapAmount && block.timestamp < claimableTime;
     }
 }
